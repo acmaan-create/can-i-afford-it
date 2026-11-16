@@ -1,0 +1,1640 @@
+<title>Can I Afford It?</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+<style>
+/* =============================================
+   DESIGN TOKENS
+   Layout: full-screen arcade card, single column
+   Light warm-grey bg · navy · amber · maroon
+   Deliberately single theme (vintage arcade cabinet)
+   ============================================= */
+:root {
+  --bg:        #E4E0D6;
+  --panel:     #F0EDE4;
+  --panel2:    #D6D2C8;
+  --border:    #B4B0A6;
+
+  --navy:      #1A2E6E;
+  --navy-dk:   #0C1840;
+  --amber:     #B87A0A;
+  --amber-dk:  #724A05;
+  --maroon:    #781C2C;
+  --maroon-dk: #440F19;
+
+  --ink:       #17150F;
+  --mid:       #5A5650;
+  --dim:       #8C887E;
+
+  --ff-pixel:    'Press Start 2P', monospace;
+  --ff-terminal: 'VT323', monospace;
+
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--ff-terminal);
+  font-size: 20px;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-left:  max(16px, env(safe-area-inset-left,  0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+  overflow-x: hidden;
+}
+
+/* App wrapper */
+#app {
+  width: 100%; max-width: 600px;
+  min-height: 100%; padding-block: 24px;
+  display: flex; flex-direction: column;
+}
+
+/* Screen fade-in */
+.screen {
+  flex: 1; display: flex; flex-direction: column;
+  animation: appear .25s ease both;
+}
+@keyframes appear {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- TYPOGRAPHY ---- */
+.px   { font-family: var(--ff-pixel); line-height: 1.8; }
+.term { font-family: var(--ff-terminal); }
+.money   { color: var(--amber); font-variant-numeric: tabular-nums; font-weight: bold; }
+.g       { color: var(--navy); }
+.pk      { color: var(--maroon); }
+.cy      { color: var(--navy); }
+.muted   { color: var(--dim); }
+
+/* ---- BOXES ---- */
+.box {
+  border: 3px solid var(--navy);
+  box-shadow: 5px 5px 0 var(--navy-dk);
+  background: var(--panel); padding: 18px;
+}
+.box-p { border-color: var(--maroon); box-shadow: 5px 5px 0 var(--maroon-dk); }
+.box-g { border-color: var(--amber);  box-shadow: 5px 5px 0 var(--amber-dk); }
+.box-d { border-color: var(--border); box-shadow: 3px 3px 0 var(--dim); }
+
+/* ---- BUTTONS ---- */
+.btn {
+  font-family: var(--ff-pixel); font-size: 10px;
+  padding: 13px 20px; border: 3px solid transparent;
+  cursor: pointer; background: transparent;
+  line-height: 1.6; letter-spacing: .5px;
+  transition: filter .1s;
+  user-select: none;
+}
+.btn:active { transform: translate(4px,4px); box-shadow: none !important; }
+
+.btn-g {
+  background: var(--navy); color: var(--panel);
+  border-color: var(--navy-dk);
+  box-shadow: 5px 5px 0 var(--navy-dk);
+}
+.btn-g:hover { filter: brightness(1.15); }
+
+.btn-p {
+  background: var(--maroon); color: var(--panel);
+  border-color: var(--maroon-dk);
+  box-shadow: 5px 5px 0 var(--maroon-dk);
+}
+.btn-p:hover { filter: brightness(1.15); }
+
+.btn-d {
+  background: transparent; color: var(--mid);
+  border: 2px solid var(--border);
+  box-shadow: 3px 3px 0 var(--border);
+  font-size: 8px;
+}
+.btn-d:hover { border-color: var(--navy); color: var(--navy); box-shadow: 3px 3px 0 var(--navy-dk); }
+
+.btn-r {
+  background: transparent; color: var(--maroon);
+  border: 2px solid var(--maroon);
+  box-shadow: 2px 2px 0 var(--maroon-dk);
+  font-size: 7px; padding: 8px 12px;
+}
+.full { width: 100%; text-align: center; }
+
+/* ---- INPUTS ---- */
+.lbl {
+  font-family: var(--ff-pixel); font-size: 8px;
+  color: var(--dim); letter-spacing: 1px; display: block; margin-bottom: 6px;
+}
+.opt-tag {
+  font-family: var(--ff-pixel); font-size: 7px;
+  color: var(--dim); border: 1px solid var(--dim);
+  padding: 2px 6px; display: inline-block; letter-spacing: 1px; vertical-align: middle;
+}
+input, select {
+  font-family: var(--ff-terminal); font-size: 24px;
+  background: var(--panel); color: var(--amber);
+  border: 2px solid var(--border); padding: 10px 14px;
+  outline: none; width: 100%;
+  -webkit-appearance: none; appearance: none;
+}
+input:focus, select:focus {
+  border-color: var(--navy);
+  box-shadow: 3px 3px 0 var(--navy-dk);
+  caret-color: var(--navy);
+}
+input[type="text"] { color: var(--ink); }
+input::placeholder { color: var(--dim); }
+.pfx { display: flex; align-items: stretch; }
+.pfx-sym {
+  padding: 10px 12px;
+  background: var(--panel2); border: 2px solid var(--border);
+  border-right: none; color: var(--mid);
+  font-family: var(--ff-terminal); font-size: 24px;
+  line-height: 1.4; display: flex; align-items: center;
+}
+.pfx input { border-left: none; min-width: 0; }
+select {
+  color: var(--ink);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0 0l6 8 6-8z' fill='%231A2E6E'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+  padding-right: 36px; cursor: pointer;
+}
+
+/* Toggle */
+.toggle { display: flex; border: 2px solid var(--border); background: var(--panel); }
+.tog-opt {
+  flex: 1; font-family: var(--ff-pixel); font-size: 8px;
+  padding: 12px 6px; text-align: center; cursor: pointer;
+  color: var(--dim); border: none; background: transparent;
+  transition: all .1s; line-height: 1.6;
+}
+.tog-opt.on { background: var(--navy); color: var(--panel); }
+
+/* Step dots */
+.dots { display: flex; gap: 8px; }
+.dot {
+  width: 10px; height: 10px;
+  border: 2px solid var(--border); background: transparent;
+}
+.dot.done { background: var(--navy); border-color: var(--navy); }
+.dot.now  { border-color: var(--maroon); background: var(--maroon); opacity: .6; }
+
+/* Stat rows */
+.sr {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 21px; padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+.sr:last-child { border-bottom: none; }
+.sr-label { color: var(--dim); }
+
+/* Progress */
+.prog-track { background: var(--border); height: 8px; }
+.prog-fill  { height: 100%; background: var(--navy); transition: width .4s; }
+
+/* List items */
+.li {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; font-size: 20px; border-bottom: 1px solid var(--border);
+}
+.li-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.li-amt  { color: var(--amber); flex-shrink: 0; font-weight: bold; }
+.li-tag  { color: var(--dim); font-size: 17px; flex-shrink: 0; }
+.li-rm   { color: var(--maroon); cursor: pointer; background: none; border: none; font-family: var(--ff-terminal); font-size: 20px; flex-shrink: 0; }
+
+/* Alt items */
+.alt { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 19px; }
+.alt:last-child { border-bottom: none; }
+.alt-arr { color: var(--maroon); flex-shrink: 0; }
+
+/* Nav bar */
+.nav { display: flex; justify-content: space-between; align-items: center; padding: 10px 0 16px; }
+
+/* Spacer */
+.sp { flex: 1; }
+
+/* Gap stacks */
+.col-sm { display: flex; flex-direction: column; gap: 12px; }
+.col-md { display: flex; flex-direction: column; gap: 20px; }
+.col-lg { display: flex; flex-direction: column; gap: 32px; }
+.row    { display: flex; gap: 12px; }
+.row > * { flex: 1; min-width: 0; }
+
+/* Loading dots */
+@keyframes dpulse { 0%,100%{opacity:.15} 50%{opacity:1} }
+.ld span { animation: dpulse 1.2s ease-in-out infinite; }
+.ld span:nth-child(2) { animation-delay: .2s; }
+.ld span:nth-child(3) { animation-delay: .4s; }
+
+/* Verdict */
+.verd { font-family: var(--ff-pixel); text-align: center; padding: 20px 10px; line-height: 2.2; }
+.vy { color: var(--navy); }
+.vc { color: var(--amber); }
+.vn { color: var(--maroon); }
+
+@media (max-width: 480px) {
+  .btn { font-size: 8px; padding: 11px 14px; }
+  .row { flex-direction: column; }
+}
+</style>
+
+<div id="app"></div>
+
+<script>
+// ─── CONSTANTS ───────────────────────────────────────────────────
+const CURRENCIES = ['₹','$','£','€','¥'];
+const EM_MONTHS  = 3;
+
+const DEFAULT = {
+  currency:'₹', income:0, fixedExpenses:0, variableExpenses:0,
+  savings:0, investments:0, emergencyMonths:EM_MONTHS, savingsTarget:0,
+  smallPurchaseThreshold:0,
+  upcomingExpenses:[], goals:[], lastUpdated:null
+};
+
+// ─── STATE ───────────────────────────────────────────────────────
+let S = {
+  screen:'welcome', setupStep:0,
+  profile:null, query:{isRecurring:false}, result:null,
+  deltaField:null, confirmReset:false
+};
+let TP = {...DEFAULT}; // temp profile during setup
+
+// ─── PERSISTENCE ─────────────────────────────────────────────────
+function load() {
+  try { const r=localStorage.getItem('caai_v1'); return r?JSON.parse(r):null; } catch(e){ return null; }
+}
+function save(p) {
+  try { p.lastUpdated=new Date().toISOString(); localStorage.setItem('caai_v1',JSON.stringify(p)); } catch(e){}
+}
+
+// ─── FORMAT ──────────────────────────────────────────────────────
+function fmt(n, c) {
+  c = c||(S.profile?.currency)||'₹';
+  if(n==null||isNaN(n)) return c+'—';
+  const abs=Math.abs(Math.round(n));
+  const locale = c==='₹'?'en-IN':'en-US';
+  return (n<0?'-':'')+c+abs.toLocaleString(locale);
+}
+function tstr(m) {
+  if(!isFinite(m)||m>240) return 'a very long time';
+  if(m<=0) return 'now'; if(m===1) return '1 month';
+  if(m<12) return `${m} months`;
+  const y=Math.floor(m/12), mo=m%12;
+  if(!mo) return y===1?'1 year':`${y} years`;
+  return `${y}y ${mo}m`;
+}
+
+// ─── ANALYSIS ENGINE ─────────────────────────────────────────────
+function analyze(item, amount, recurring, purchaseMonths) {
+  const p = S.profile;
+  const totExp  = p.fixedExpenses + p.variableExpenses;
+  const emgTgt  = totExp * p.emergencyMonths;
+  const liquid  = p.savings - emgTgt;
+  const rawSurp = p.income - totExp;
+  const freeSurp= rawSurp - p.savingsTarget;
+
+  // Near-term upcoming expense pressure (next 3 months)
+  const pressure = (p.upcomingExpenses||[]).reduce((s,e)=>(e.monthsAway<=3?s+e.amount:s),0);
+  const effLiquid = liquid - pressure;
+
+  const c = p.currency;
+
+  if(recurring) {
+    const newFree = freeSurp - amount;
+    const newRaw  = rawSurp  - amount;
+    const pct     = freeSurp>0?Math.round(amount/freeSurp*100):999;
+
+    let verdict, emoji, tagline, detail;
+    if(newFree >= freeSurp*0.4) {
+      verdict='YES'; emoji='✅'; tagline="YEAH, YOU GOT THIS.";
+      detail=`This is ${pct}% of your free monthly cash. You still have solid breathing room.`;
+    } else if(newFree >= 0) {
+      verdict='CAREFUL'; emoji='⚡'; tagline="TECHNICALLY YES. TREAD CAREFULLY.";
+      detail=`This eats ${pct}% of your free monthly cash. Not much slack left after this.`;
+    } else if(newRaw >= 0) {
+      verdict='CAREFUL'; emoji='⚠️'; tagline="ONLY IF YOU PAUSE YOUR SAVINGS.";
+      detail=`Your income covers it, but your savings goal has to take a hit to make it work.`;
+    } else {
+      verdict='NO'; emoji='🛑'; tagline="NOT RIGHT NOW, FRIEND.";
+      detail=`You'd need ${fmt(Math.abs(newRaw),c)} more each month. Tight budget.`;
+    }
+
+    // Goal impacts
+    const totalGoalTarget = (p.goals||[]).reduce((s,g)=>s+g.target,0)||1;
+    const goalImpacts = (p.goals||[]).map(g=>{
+      const rem = g.target-(g.saved||0);
+      const share = g.target/totalGoalTarget;
+      const curMo = p.savingsTarget*share;
+      const newMo = Math.max(0,(p.savingsTarget-amount)*share);
+      const old = curMo>0?Math.ceil(rem/curMo):null;
+      const nw  = newMo>0?Math.ceil(rem/newMo):null;
+      const delay = (old&&nw)?nw-old:null;
+      return {...g,delay};
+    });
+
+    const alts = [];
+    if(verdict!=='YES') {
+      if(freeSurp>0&&amount>freeSurp) {
+        alts.push(`Cut other variable expenses by ${fmt(amount-freeSurp,c)}/month to absorb this`);
+      }
+      const moNeeded = freeSurp>0?Math.ceil(amount*12/freeSurp):null;
+      if(moNeeded&&moNeeded<=18) alts.push(`Save up for it in ${tstr(moNeeded)} instead — then no monthly hit`);
+    }
+
+    return {verdict,emoji,tagline,detail,item,amount,recurring,
+            freeSurp,newFree,newRaw,goalImpacts,alts,c};
+
+  } else {
+    // One-time purchase
+    const threshold = p.smallPurchaseThreshold || 0;
+    const isSmall   = threshold > 0 && amount <= threshold;
+    const oppCost   = Math.round(amount*(Math.pow(1.08,5)-1));
+
+    if (isSmall) {
+      // ── SMALL PURCHASE: monthly income only, savings never considered ──
+      const moNeeded = freeSurp > 0 ? Math.ceil(amount / freeSurp) : Infinity;
+      let verdict, emoji, tagline, detail;
+
+      if (freeSurp >= amount) {
+        verdict='YES'; emoji='✅'; tagline="FITS IN THIS MONTH'S BUDGET.";
+        detail=`Comes straight out of your monthly surplus. Savings completely untouched.`;
+      } else if (moNeeded <= 2) {
+        verdict='YES'; emoji='✅';
+        tagline=`SAVE FOR ${moNeeded} MONTH${moNeeded>1?'S':''} — DONE.`;
+        detail=`Set aside ${fmt(Math.ceil(amount/moNeeded),c)}/month. Savings stay where they are.`;
+      } else if (moNeeded <= 5) {
+        verdict='CAREFUL'; emoji='⚡';
+        tagline=`${moNeeded} MONTHS OF SAVING. DOABLE.`;
+        detail=`${fmt(Math.ceil(amount/moNeeded),c)}/month for ${moNeeded} months. No savings touched.`;
+      } else {
+        verdict='NO'; emoji='⏳';
+        tagline=`${tstr(moNeeded).toUpperCase()} TO SAVE FROM INCOME.`;
+        detail=`Takes a while from monthly income alone. Consider whether it's worth the wait.`;
+      }
+
+      const alts=[];
+      if(freeSurp>0 && moNeeded>1) {
+        alts.push(`Auto-transfer ${fmt(Math.ceil(amount/moNeeded),c)}/month to a dedicated fund — you'll barely notice it`);
+      }
+      if(moNeeded>3 && freeSurp>0) {
+        const faster=Math.ceil(amount/Math.ceil(moNeeded*0.6));
+        alts.push(`Trim variable spending by ${fmt(faster-Math.ceil(amount/moNeeded),c)}/month to get there in ${tstr(Math.ceil(moNeeded*0.6))} instead`);
+      }
+
+      return {verdict,emoji,tagline,detail,item,amount,recurring:false,isSmall:true,
+              freeSurp,moNeeded,alts,threshold,c};
+
+    } else {
+      // ── LARGE PURCHASE: 4-tier wisdom hierarchy ──
+
+      // Short-term goal pressure: earmarked saved amounts reduce effective liquid
+      const shortGoals  = (p.goals||[]).filter(g=>(g.term||'long')==='short');
+      const stPressure  = shortGoals.reduce((s,g)=>s+(g.saved||0),0);
+      const effLiq2     = effLiquid - stPressure; // liquid after all earmarks
+
+      const tiers = [];
+
+      // Tier 1 — Wisest: Save from monthly surplus
+      if (freeSurp > 0) {
+        const moNeeded = Math.ceil(amount / freeSurp);
+        if (freeSurp >= amount) {
+          tiers.push({tier:1, wisdom:'WISEST', wisdomColor:'#2E6E3A', feasible:true,
+            strategy:"PAY FROM THIS MONTH'S SURPLUS",
+            detail:'Fully covered by your free monthly cash. Zero savings impact.',
+            badge:'SAVINGS UNTOUCHED ✓', badgeColor:'var(--navy)', moNeeded:0});
+        } else {
+          const ph = purchaseMonths; // shorthand
+          const fitsH = ph==null || freeSurp*ph>=amount;
+          const horizon = (ph!=null && ph>0 && freeSurp*ph>=amount) ? ph : moNeeded;
+          const monthly = Math.ceil(amount/horizon);
+          tiers.push({tier:1, wisdom:'WISEST', wisdomColor:'#2E6E3A', feasible:true,
+            strategy:`SAVE ${fmt(monthly,c)}/MO FOR ${tstr(horizon).toUpperCase()}`,
+            detail: fitsH
+              ? `By purchase date, fully saved from monthly cash. Savings completely untouched.`
+              : `Savings stay intact, but takes ${tstr(moNeeded)} — ${moNeeded-(ph||0)} months past your planned date.`,
+            badge: fitsH ? 'SAVINGS UNTOUCHED ✓' : 'TIMELINE OVERRUNS',
+            badgeColor: fitsH ? 'var(--navy)' : 'var(--amber)', moNeeded});
+        }
+      }
+
+      // Tier 2 — Sort of wise: Save monthly + liquid top-up (only when horizon given)
+      if (purchaseMonths!=null && purchaseMonths>0 && freeSurp>0 && effLiq2>0) {
+        const savedM = freeSurp * purchaseMonths;
+        const liqNeeded = Math.max(0, amount - savedM);
+        if (liqNeeded>0 && liqNeeded<=effLiq2) {
+          tiers.push({tier:2, wisdom:'SORT OF WISE', wisdomColor:'#B87A0A', feasible:true,
+            strategy:`SAVE ${fmt(freeSurp,c)}/MO + ${fmt(liqNeeded,c)} FROM SAVINGS`,
+            detail:`Save all your free cash for ${purchaseMonths} month${purchaseMonths!==1?'s':''} (${fmt(savedM,c)}), top up ${fmt(liqNeeded,c)} from available liquid.`,
+            badge:'PARTIAL SAVINGS USE', badgeColor:'var(--amber)', liquidUsed:liqNeeded});
+        }
+      }
+
+      // Tier 3 — Uses liquid savings
+      if (effLiq2 >= amount) {
+        const pct = Math.round(amount/effLiq2*100);
+        tiers.push({tier:3, wisdom:'USES SAVINGS', wisdomColor:'#B87A0A', feasible:true,
+          strategy:`USE ${fmt(amount,c)} FROM AVAILABLE LIQUID`,
+          detail:`Uses ${pct}% of your available liquid (${fmt(effLiq2,c)} above emergency fund). Emergency buffer stays intact.`,
+          badge:'⚠ TOUCHES SAVINGS', badgeColor:'var(--maroon)', liquidUsed:amount});
+      }
+
+      // Tier 4 — Investments (last resort)
+      if ((p.investments||0)>0) {
+        const totalAvail = Math.max(0,effLiq2)+(p.investments||0);
+        if (totalAvail>=amount) {
+          const investNeeded = Math.max(0, amount-Math.max(0,effLiq2));
+          const opp = Math.round(investNeeded*(Math.pow(1.08,5)-1));
+          tiers.push({tier:4, wisdom:'LAST RESORT', wisdomColor:'#781C2C', feasible:true,
+            strategy:`LIQUIDATE ${fmt(investNeeded,c)} FROM INVESTMENTS`,
+            detail:`Requires selling investments. At 8%/yr growth, this costs ~${fmt(opp,c)} in potential gains over 5 years.`,
+            badge:'🔴 LIQUIDATES INVESTMENTS', badgeColor:'var(--maroon-dk)', investUsed:investNeeded});
+        }
+      }
+
+      // Determine best feasible tier considering timeline
+      const ph = purchaseMonths;
+      const t1 = tiers.find(t=>t.tier===1);
+      const t1fits = t1 && (ph==null || t1.moNeeded===0 || (freeSurp*(ph||0)>=amount));
+      const t2 = tiers.find(t=>t.tier===2);
+      const t3 = tiers.find(t=>t.tier===3);
+      const t4 = tiers.find(t=>t.tier===4);
+
+      let verdict, emoji, tagline, detail, best;
+      if (t1fits) {
+        verdict='YES'; emoji='✅'; best=t1;
+        tagline=t1.moNeeded===0?"YOUR MONTHLY SURPLUS COVERS THIS.":t1.strategy+'.';
+        detail=t1.detail;
+      } else if (t2) {
+        verdict='YES'; emoji='✅'; best=t2;
+        tagline='DOABLE — WITH A SMART MIX.';
+        detail=t2.detail;
+      } else if (t3) {
+        verdict='CAREFUL'; emoji='⚡'; best=t3;
+        tagline='SAVINGS TAKE A HIT.';
+        detail=t3.detail;
+      } else if (t4) {
+        verdict='CAREFUL'; emoji='💰'; best=t4;
+        tagline='INVESTMENT TERRITORY.';
+        detail=t4.detail;
+      } else if (t1) {
+        verdict='CAREFUL'; emoji='⏳'; best=t1;
+        tagline=`SAVE UP — TAKES ${tstr(t1.moNeeded).toUpperCase()}.`;
+        detail=t1.detail;
+      } else {
+        verdict='NO'; emoji='🛑'; best=null;
+        tagline='NO AFFORDABLE PATH RIGHT NOW.';
+        detail='Build up savings or income first.';
+      }
+
+      // Short-term goals whose deadline conflicts with purchase timeline
+      const goalConflicts = ph!=null
+        ? shortGoals.filter(g=>g.monthsAway!=null && g.monthsAway<=Math.max(ph,1)+1)
+        : [];
+
+      return {verdict,emoji,tagline,detail,item,amount,recurring:false,isSmall:false,
+              tiers,best,goalConflicts,shortGoals,
+              freeSurp,effLiquid:effLiq2,stPressure,upcomingPressure:pressure,purchaseMonths:ph,c};
+    }
+  }
+}
+
+// ─── SCREENS ─────────────────────────────────────────────────────
+
+function screenWelcome() {
+  return `
+  <div class="screen col-lg" style="justify-content:center;min-height:90vh;padding-top:32px;">
+    <div class="col-sm" style="text-align:center;">
+      <div class="px" style="font-size:clamp(18px,5vw,30px);letter-spacing:-1px;color:var(--navy);">
+        CAN I<br>AFFORD IT?
+      </div>
+      <div class="term" style="font-size:22px;letter-spacing:3px;color:var(--maroon);">
+        ★ YOUR POCKET MONEY BRAIN ★
+      </div>
+    </div>
+
+    <div class="box" style="text-align:center;">
+      <div style="font-size:52px;margin-bottom:10px;">💸</div>
+      <div class="term" style="font-size:21px;color:var(--dim);">
+        Before you swipe that card —
+        <span style="color:var(--ink);">ask first.</span>
+      </div>
+    </div>
+
+    <div class="col-sm">
+      <button class="btn btn-g full" onclick="goSetup()">FIRST TIME →</button>
+      <button class="btn btn-p full" onclick="goBack()">I'M BACK ←</button>
+    </div>
+
+    <div class="term muted" style="text-align:center;font-size:17px;">
+      all data stays on your device · no accounts · no cloud
+    </div>
+  </div>`;
+}
+
+// ── SETUP ──────────────────────────────────────────────
+const STEPS = [
+  {
+    id:'basics', title:"LET'S GET\nYOU SET UP.",
+    sub:"What's your monthly take-home?",
+    hint:"After taxes and deductions — what actually lands in your account.",
+    render(p){ return `
+      <div class="col-sm">
+        <div><label class="lbl">CURRENCY</label>
+          <select id="f_cur">${CURRENCIES.map(c=>`<option value="${c}"${c===(p.currency||'₹')?' selected':''}>${c}</option>`).join('')}</select>
+        </div>
+        <div><label class="lbl">MONTHLY TAKE-HOME</label>
+          <input type="number" id="f_inc" placeholder="0" value="${p.income||''}" min="0">
+        </div>
+        <div><label class="lbl">I SAVE THIS MUCH EACH MONTH</label>
+          <div class="term muted" style="font-size:17px;margin-bottom:6px;">what you deliberately set aside — SIP, RD, manual transfer, etc.</div>
+          <input type="number" id="f_st" placeholder="0" value="${p.savingsTarget||''}" min="0">
+        </div>
+      </div>`; },
+    collect(p){
+      const currency=document.getElementById('f_cur')?.value||'₹';
+      const income=parseFloat(document.getElementById('f_inc')?.value)||0;
+      const savingsTarget=parseFloat(document.getElementById('f_st')?.value)||0;
+      if(!income) return 'Enter your monthly income.';
+      return {...p,currency,income,savingsTarget};
+    }
+  },
+  {
+    id:'fixed', title:"FIXED\nOUTGOINGS.",
+    sub:"What goes out every month, no matter what?",
+    hint:"Rent, mortgage, EMIs, insurance, subscriptions — the unavoidables.",
+    render(p){ return `
+      <div><label class="lbl">TOTAL MONTHLY FIXED EXPENSES</label>
+        <div class="pfx">
+          <div class="pfx-sym">${p.currency}</div>
+          <input type="number" id="f_fix" placeholder="0" value="${p.fixedExpenses||''}" min="0">
+        </div>
+        <div class="term muted" style="font-size:17px;margin-top:8px;">rent/mortgage · EMIs · insurance · subscriptions</div>
+      </div>`; },
+    collect(p){
+      return {...p, fixedExpenses:parseFloat(document.getElementById('f_fix')?.value)||0};
+    }
+  },
+  {
+    id:'variable', title:"DAY-TO-DAY\nSPENDING.",
+    sub:"What do you spend on living each month?",
+    hint:"Food, transport, entertainment, shopping — the stuff that varies.",
+    render(p){ return `
+      <div>
+        <label class="lbl">MONTHLY VARIABLE EXPENSES</label>
+        <div class="pfx">
+          <div class="pfx-sym">${p.currency}</div>
+          <input type="number" id="f_var" placeholder="0" value="${p.variableExpenses||''}" min="0">
+        </div>
+        <div class="term muted" style="font-size:17px;margin-top:8px;">groceries · dining · transport · fun</div>
+        <div class="term muted" style="font-size:16px;margin-top:4px;">💡 not sure? check last month's card/UPI statement</div>
+      </div>`; },
+    collect(p){
+      return {...p, variableExpenses:parseFloat(document.getElementById('f_var')?.value)||0};
+    }
+  },
+  {
+    id:'savings', title:"YOUR\nWAR CHEST.",
+    sub:"What's sitting in your savings right now?",
+    hint:"Liquid savings = what's in your savings or current account today.",
+    render(p){ return `
+      <div class="col-sm">
+        <div><label class="lbl">LIQUID SAVINGS</label>
+          <div class="pfx">
+            <div class="pfx-sym">${p.currency}</div>
+            <input type="number" id="f_sav" placeholder="0" value="${p.savings||''}" min="0">
+          </div>
+        </div>
+        <div><label class="lbl">INVESTMENTS <span class="opt-tag">OPTIONAL</span></label>
+          <div class="term muted" style="font-size:17px;margin-bottom:6px;">stocks, MF, FD — stuff you've put away long term</div>
+          <div class="pfx">
+            <div class="pfx-sym">${p.currency}</div>
+            <input type="number" id="f_inv" placeholder="0" value="${p.investments||''}" min="0">
+          </div>
+        </div>
+        <div><label class="lbl">SMALL PURCHASE LIMIT <span class="opt-tag">OPTIONAL</span></label>
+          <div class="term muted" style="font-size:17px;margin-bottom:6px;">below this amount, I'll only look at your monthly income — savings never touched</div>
+          <div class="pfx">
+            <div class="pfx-sym">${p.currency}</div>
+            <input type="number" id="f_spt" placeholder="e.g. 25000" value="${p.smallPurchaseThreshold||''}" min="0">
+          </div>
+        </div>
+      </div>`; },
+    collect(p){
+      return {...p,
+        savings:parseFloat(document.getElementById('f_sav')?.value)||0,
+        investments:parseFloat(document.getElementById('f_inv')?.value)||0,
+        smallPurchaseThreshold:parseFloat(document.getElementById('f_spt')?.value)||0
+      };
+    }
+  },
+  {
+    id:'upcoming', title:"BIG EXPENSES\nCOMING UP?",
+    sub:"Anything large you're already planning for?",
+    hint:"Vacation, gadget, appliance, event — things you've mentally earmarked money for.",
+    skippable:true,
+    render(p){ return `
+      <div class="col-sm">
+        <div class="opt-tag">OPTIONAL — SKIP IF NONE</div>
+        <div id="up-list" class="col-sm">${renderUpList(p.upcomingExpenses||[],p.currency)}</div>
+        <div class="box-d" style="border:2px solid var(--dim);background:var(--panel);padding:14px;">
+          <div class="col-sm">
+            <div><label class="lbl">WHAT IS IT?</label>
+              <input type="text" id="f_un" placeholder="e.g. Vacation" style="font-size:20px;color:var(--white);">
+            </div>
+            <div class="row">
+              <div><label class="lbl">AMOUNT</label>
+                <div class="pfx"><div class="pfx-sym">${p.currency}</div>
+                  <input type="number" id="f_ua" placeholder="0">
+                </div>
+              </div>
+              <div><label class="lbl">MONTHS AWAY</label>
+                <input type="number" id="f_um" placeholder="e.g. 3" min="1">
+              </div>
+            </div>
+            <button class="btn btn-d full" onclick="addUp()">+ ADD</button>
+          </div>
+        </div>
+      </div>`; },
+    collect(p){ return p; }
+  },
+  {
+    id:'goals', title:"SAVING\nTOWARD WHAT?",
+    sub:"Any financial goals you're working toward?",
+    hint:"House, car, emergency fund, big trip — the things you're building toward.",
+    skippable:true,
+    render(p){ return `
+      <div class="col-sm">
+        <div class="opt-tag">OPTIONAL — SKIP IF NONE</div>
+        <div id="goal-list" class="col-sm">${renderGoalList(p.goals||[],p.currency)}</div>
+        <div style="border:2px solid var(--dim);background:var(--panel);padding:14px;">
+          <div class="col-sm">
+            <div><label class="lbl">SAVING FOR?</label>
+              <input type="text" id="f_gn" placeholder="e.g. Vacation, gadget, house" style="font-size:20px;">
+            </div>
+            <div>
+              <label class="lbl">TYPE</label>
+              <div class="toggle">
+                <button class="tog-opt on" id="tog_glong" onclick="setGoalTerm('long')">LONG-TERM<br>(investments-linked)</button>
+                <button class="tog-opt" id="tog_gshort" onclick="setGoalTerm('short')">SHORT-TERM<br>(liquid savings)</button>
+              </div>
+              <div class="term muted" style="font-size:17px;margin-top:6px;" id="goal-term-hint">Long-term: excluded from affordability math — tied to your investments.</div>
+            </div>
+            <div id="goal-ma-row" style="display:none;">
+              <label class="lbl">WHEN DO YOU NEED THIS MONEY?</label>
+              <div class="pfx"><div class="pfx-sym">mo</div>
+                <input type="number" id="f_gma" placeholder="e.g. 12" min="1">
+              </div>
+            </div>
+            <div class="row">
+              <div><label class="lbl">TARGET</label>
+                <div class="pfx"><div class="pfx-sym">${p.currency}</div>
+                  <input type="number" id="f_gt" placeholder="0">
+                </div>
+              </div>
+              <div><label class="lbl">SAVED SO FAR</label>
+                <div class="pfx"><div class="pfx-sym">${p.currency}</div>
+                  <input type="number" id="f_gs" placeholder="0">
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-d full" onclick="addGoal()">+ ADD GOAL</button>
+          </div>
+        </div>
+      </div>`; },
+    collect(p){ return p; }
+  }
+];
+
+function renderUpList(arr, c){
+  return arr.map((e,i)=>`
+    <div class="li">
+      <span class="li-name">${e.name}</span>
+      <span class="li-amt">${fmt(e.amount,c)}</span>
+      <span class="li-tag">in ${e.monthsAway}mo</span>
+      <button class="li-rm" onclick="rmUp(${i})">✕</button>
+    </div>`).join('');
+}
+
+function renderGoalList(arr, c){
+  return arr.map((g,i)=>{
+    const t=g.term||'long';
+    return `
+    <div class="li">
+      <span class="li-name">${g.name}</span>
+      <span style="font-family:var(--ff-pixel);font-size:7px;padding:1px 5px;border:1px solid ${t==='short'?'var(--amber)':'var(--navy)'};color:${t==='short'?'var(--amber)':'var(--navy)'};">${t==='short'?'SHORT':'LONG'}</span>
+      ${t==='short'&&g.monthsAway?`<span class="li-tag">${g.monthsAway}mo</span>`:''}
+      <span class="li-amt">${fmt(g.target,c)}</span>
+      <button class="li-rm" onclick="rmGoal(${i})">✕</button>
+    </div>`;}).join('');
+}
+
+function screenSetup(){
+  const step=STEPS[S.setupStep], p=TP, total=STEPS.length;
+  const isLast=S.setupStep===total-1;
+  return `
+  <div class="screen col-md" style="padding-top:8px;">
+    <div class="nav">
+      <button class="btn btn-d" onclick="setupBack()">${S.setupStep===0?'← CANCEL':'← BACK'}</button>
+      <div class="dots">${Array.from({length:total},(_,i)=>`<div class="dot ${i<S.setupStep?'done':i===S.setupStep?'now':''}"></div>`).join('')}</div>
+      ${step.skippable?`<button class="btn btn-d" onclick="setupSkip()">SKIP →</button>`:'<div></div>'}
+    </div>
+
+    <div class="px" style="font-size:clamp(13px,3.5vw,18px);white-space:pre-line;color:var(--navy);">${step.title}</div>
+
+    <div class="col-sm">
+      <div class="term" style="font-size:23px;">${step.sub}</div>
+      <div class="term muted" style="font-size:18px;">${step.hint}</div>
+    </div>
+
+    ${step.render(p)}
+
+    <div class="sp"></div>
+
+    <button class="btn ${isLast?'btn-p':'btn-g'} full" style="margin-top:16px;" onclick="setupNext()">
+      ${isLast?"LET'S GO ★":'NEXT →'}
+    </button>
+  </div>`;
+}
+
+// ── DELTA ──────────────────────────────────────────────
+function screenDelta(){
+  const p=S.profile;
+  const totExp=p.fixedExpenses+p.variableExpenses;
+  const emgTgt=totExp*p.emergencyMonths;
+  const liquid=p.savings-emgTgt;
+  const rawSurp=p.income-totExp;
+  const freeSurp=rawSurp-p.savingsTarget;
+  const lastDate=p.lastUpdated?new Date(p.lastUpdated).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'—';
+
+  if(S.deltaField) return screenDeltaEdit(S.deltaField,p);
+
+  return `
+  <div class="screen col-md" style="padding-top:8px;">
+    <div class="nav">
+      <button class="btn btn-d" onclick="goWelcome()">← HOME</button>
+      <div class="px muted" style="font-size:7px;">LAST: ${lastDate}</div>
+    </div>
+
+    <div class="px" style="font-size:clamp(14px,3.5vw,20px);color:var(--navy);">WELCOME<br>BACK! 👾</div>
+
+    <div class="box">
+      <div class="px muted" style="font-size:7px;margin-bottom:12px;">YOUR SNAPSHOT</div>
+      <div class="sr"><span class="sr-label">MONTHLY IN</span><span class="money">${fmt(p.income)}</span></div>
+      <div class="sr"><span class="sr-label">MONTHLY OUT</span><span style="color:var(--maroon);">${fmt(totExp)}</span></div>
+      <div class="sr"><span class="sr-label">FREE MONTHLY</span><span style="color:${freeSurp>=0?'var(--navy)':'var(--maroon)'};">${fmt(freeSurp)}</span></div>
+      <div class="sr"><span class="sr-label">LIQUID SAVINGS</span><span class="money">${fmt(p.savings)}</span></div>
+      ${liquid<0?`<div class="term" style="color:var(--maroon);font-size:18px;margin-top:10px;">⚠ Emergency fund is ${fmt(Math.abs(liquid))} below target.</div>`:''}
+    </div>
+
+    <div class="col-sm">
+      <div class="px muted" style="font-size:7px;letter-spacing:2px;">WHAT'S CHANGED?</div>
+      <button class="btn btn-d full" onclick="setDF('income')">INCOME / SAVINGS RATE CHANGED</button>
+      <button class="btn btn-d full" onclick="setDF('expenses')">EXPENSES CHANGED</button>
+      <button class="btn btn-d full" onclick="setDF('savings')">SAVINGS BALANCE CHANGED</button>
+      <button class="btn btn-d full" onclick="setDF('upcoming')">NEW UPCOMING EXPENSE</button>
+      <button class="btn btn-d full" onclick="setDF('goals')">GOALS CHANGED</button>
+    </div>
+
+    <div class="sp"></div>
+    <button class="btn btn-g full" onclick="goAsk()">ALL GOOD — LET'S GO →</button>
+  </div>`;
+}
+
+function screenDeltaEdit(field, p){
+  let title, fields;
+  if(field==='income'){
+    title='UPDATE INCOME & SAVINGS RATE';
+    fields=`<div class="col-sm">
+      <div><label class="lbl">MONTHLY TAKE-HOME</label>
+        <input type="number" id="d_inc" value="${p.income}" min="0"></div>
+      <div><label class="lbl">I SAVE THIS MUCH EACH MONTH</label>
+        <input type="number" id="d_st" value="${p.savingsTarget||0}" min="0"></div>
+    </div>`;
+  } else if(field==='expenses'){
+    title='UPDATE EXPENSES';
+    fields=`<div class="col-sm">
+      <div><label class="lbl">FIXED EXPENSES (RENT, EMI ETC.)</label>
+        <input type="number" id="d_fix" value="${p.fixedExpenses}" min="0"></div>
+      <div><label class="lbl">VARIABLE EXPENSES (FOOD, FUN ETC.)</label>
+        <input type="number" id="d_var" value="${p.variableExpenses}" min="0"></div>
+    </div>`;
+  } else if(field==='savings'){
+    title='UPDATE SAVINGS';
+    fields=`<div><label class="lbl">CURRENT LIQUID SAVINGS</label>
+      <input type="number" id="d_sav" value="${p.savings}" min="0"></div>`;
+  } else if(field==='goals'){
+    title='TAG YOUR GOALS';
+    const goals=p.goals||[];
+    const goalRows=goals.length===0
+      ? `<div class="term muted" style="font-size:19px;padding:12px 0;">No goals saved yet. Add them in EDIT PROFILE → step 5.</div>`
+      : goals.map((g,i)=>{
+          const t=g.term||'long';
+          return `<div style="border:1px solid var(--border);padding:12px 14px;background:var(--panel2);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <span class="term" style="font-size:21px;">${g.name}</span>
+              <span class="money" style="font-size:19px;">${fmt(g.target,p.currency)}</span>
+            </div>
+            <div class="toggle" style="margin-bottom:8px;">
+              <button id="dg_long_${i}" class="tog-opt ${t==='long'?'on':''}" onclick="setDeltaGoalTerm(${i},'long')">LONG-TERM</button>
+              <button id="dg_short_${i}" class="tog-opt ${t==='short'?'on':''}" onclick="setDeltaGoalTerm(${i},'short')">SHORT-TERM</button>
+            </div>
+            <div id="dg-ma-${i}" style="${t==='short'?'':'display:none;'}">
+              <label class="lbl">MONTHS AWAY</label>
+              <input type="number" id="dg_ma_${i}" value="${g.monthsAway||''}" min="1" placeholder="e.g. 6">
+            </div>
+          </div>`;
+        }).join('');
+    fields=`<div class="col-sm">
+      <div class="term muted" style="font-size:17px;">SHORT-TERM: saved amount is earmarked — reduces available liquid in the math. LONG-TERM: tied to investments, excluded from math.</div>
+      ${goalRows}
+    </div>`;
+  } else {
+    title='ADD UPCOMING EXPENSE';
+    fields=`<div class="col-sm">
+      <div><label class="lbl">WHAT IS IT?</label>
+        <input type="text" id="d_un" placeholder="e.g. New laptop" style="color:var(--white);font-size:20px;"></div>
+      <div class="row">
+        <div><label class="lbl">AMOUNT</label>
+          <div class="pfx"><div class="pfx-sym">${p.currency}</div><input type="number" id="d_ua" placeholder="0"></div>
+        </div>
+        <div><label class="lbl">MONTHS AWAY</label>
+          <input type="number" id="d_um" placeholder="1" min="1"></div>
+      </div>
+    </div>`;
+  }
+
+  return `
+  <div class="screen col-md" style="padding-top:8px;">
+    <div class="nav">
+      <button class="btn btn-d" onclick="clearDF()">← BACK</button>
+      <div></div>
+    </div>
+    <div class="px g" style="font-size:clamp(12px,3vw,15px);">${title}</div>
+    ${fields}
+    <div class="sp"></div>
+    <button class="btn btn-g full" onclick="saveDelta('${field}')">SAVE & CONTINUE →</button>
+  </div>`;
+}
+
+// ── ASK ────────────────────────────────────────────────
+function screenAsk(){
+  const p=S.profile, q=S.query||{};
+  const basket=q.basket||[{item:'',amount:''}];
+  const total=basket.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const multi=basket.length>1;
+
+  // ON YOUR RADAR
+  const upcoming=(p.upcomingExpenses||[]).slice().sort((a,b)=>(a.monthsAway||99)-(b.monthsAway||99));
+  const shortGoals=(p.goals||[]).filter(g=>(g.term||'long')==='short').sort((a,b)=>(a.monthsAway||99)-(b.monthsAway||99));
+  const hasRadar=upcoming.length||shortGoals.length;
+  const radarHtml=hasRadar?`
+  <div style="border:1px solid var(--amber-dk);padding:10px 14px;background:var(--panel2);">
+    <div style="font-family:var(--ff-pixel);font-size:8px;color:var(--amber);margin-bottom:8px;letter-spacing:1px;">⚡ ON YOUR RADAR</div>
+    ${upcoming.map(e=>`<div class="term" style="font-size:19px;display:flex;justify-content:space-between;padding:2px 0;">
+      <span>${e.name} <span style="font-size:14px;color:var(--dim);">↑ upcoming</span></span>
+      <span>${fmt(e.amount,p.currency)} <span class="muted">in ${e.monthsAway}mo</span></span>
+    </div>`).join('')}
+    ${shortGoals.map(g=>`<div class="term" style="font-size:19px;display:flex;justify-content:space-between;padding:2px 0;">
+      <span>${g.name} <span style="font-size:14px;color:var(--amber);">↑ short goal</span></span>
+      <span>${fmt(g.target,p.currency)}${g.monthsAway?` <span class="muted">in ${g.monthsAway}mo</span>`:''}</span>
+    </div>`).join('')}
+  </div>`:''
+
+  // Basket rows
+  const basketRows=basket.map((row,i)=>`
+    <div style="display:flex;gap:8px;align-items:flex-end;">
+      <div style="flex:1;">
+        ${i===0?'<label class="lbl">I WANT TO BUY / SPEND ON</label>':''}
+        <input type="text" id="b_item_${i}" placeholder="${i===0?'e.g. iPhone, Curtains...':'e.g. Curtains...'}"
+          value="${row.item||''}" style="font-size:20px;color:var(--white);">
+      </div>
+      <div style="width:148px;">
+        ${i===0?`<label class="lbl">COSTS</label>`:''}
+        <div class="pfx">
+          <div class="pfx-sym">${p.currency}</div>
+          <input type="number" id="b_amt_${i}" placeholder="0" value="${row.amount||''}" min="0">
+        </div>
+      </div>
+      ${multi?`<button class="li-rm" onclick="removeBasketRow(${i})" style="margin-bottom:4px;flex-shrink:0;">✕</button>`:''}
+    </div>`).join('');
+
+  return `
+  <div class="screen col-md" style="padding-top:8px;">
+    <div class="nav">
+      <button class="btn btn-d" onclick="goBack()">← BACK</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-d" onclick="goDashboard()">📊 DASH</button>
+        <button class="btn btn-d" onclick="goProfile()">⚙ PROFILE</button>
+      </div>
+    </div>
+
+    <div class="px" style="font-size:clamp(14px,3.5vw,20px);color:var(--navy);">
+      OK. WHAT ARE<br>WE DECIDING?
+    </div>
+
+    ${radarHtml}
+
+    <div class="col-md">
+      ${basketRows}
+      <button class="btn btn-d" onclick="addBasketRow()" style="font-size:11px;padding:10px 16px;align-self:flex-start;">
+        + ADD ANOTHER ITEM
+      </button>
+      ${multi?`<div style="border-top:1px solid var(--border);padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-family:var(--ff-pixel);font-size:9px;color:var(--dim);">TOTAL</span>
+        <span class="money" style="font-size:28px;">${fmt(total,p.currency)}</span>
+      </div>`:''}
+      <div>
+        <label class="lbl">THIS IS A…</label>
+        <div class="toggle">
+          <button class="tog-opt ${!q.isRecurring?'on':''}" onclick="setRec(false)">ONE-TIME<br>PURCHASE</button>
+          <button class="tog-opt ${q.isRecurring?'on':''}" onclick="setRec(true)">MONTHLY<br>EXPENSE</button>
+        </div>
+      </div>
+      ${!q.isRecurring?`
+      <div>
+        <label class="lbl">WHEN DO YOU PLAN TO BUY? <span class="opt-tag">OPTIONAL</span></label>
+        <div class="term muted" style="font-size:17px;margin-bottom:6px;">helps time it against your short-term goals</div>
+        <div class="pfx">
+          <div class="pfx-sym">in</div>
+          <input type="number" id="q_mo" placeholder="months" value="${q.purchaseMonths!=null?q.purchaseMonths:''}" min="0" style="font-size:21px;">
+        </div>
+        <div class="term muted" style="font-size:17px;margin-top:4px;">0 = this month · leave blank = no specific date</div>
+      </div>`:''}
+    </div>
+
+    ${p.smallPurchaseThreshold?`
+    <div class="term" style="font-size:17px;color:var(--dim);border:1px solid var(--border);padding:10px 14px;background:var(--panel2);">
+      ◈ purchases ≤ ${fmt(p.smallPurchaseThreshold)} → <span style="color:var(--navy);">monthly income only</span> &nbsp;·&nbsp;
+      above that → <span style="color:var(--amber);">full analysis</span>
+    </div>`:''}
+    <div class="sp"></div>
+    <button class="btn btn-p full" style="font-size:clamp(9px,2.5vw,12px);padding:18px;" onclick="run()">
+      CAN I AFFORD IT? →
+    </button>
+  </div>`;
+}
+
+// ── LOADING ─────────────────────────────────────────────
+function screenLoading(){
+  return `
+  <div class="screen" style="justify-content:center;align-items:center;min-height:80vh;gap:24px;">
+    <div class="px" style="font-size:clamp(10px,2.5vw,14px);text-align:center;line-height:2.2;color:var(--navy);">
+      CRUNCHING<br>YOUR NUMBERS
+    </div>
+    <div class="term ld" style="font-size:36px;color:var(--border);letter-spacing:6px;">
+      <span>▓</span><span>▓</span><span>▓</span>
+    </div>
+  </div>`;
+}
+
+// ── RESULT ──────────────────────────────────────────────
+function screenResult(){
+  const r=S.result; if(!r) return screenAsk();
+  const vc = r.verdict==='YES'?'vy' : r.verdict==='CAREFUL'?'vc' : 'vn';
+  const bc = r.verdict==='YES'?'' : r.verdict==='CAREFUL'?'box-g' : 'box-p';
+
+  // ── Large one-time: wisdom hierarchy layout ──
+  if (!r.recurring && !r.isSmall && r.tiers) {
+    const wisRows = (r.tiers||[]).map(t => {
+      const isRec = t.tier === r.best?.tier;
+      const bCls  = t.tier===1?'box':t.tier===2?'box-g':'box-p';
+      return `<div class="${bCls}" style="padding:12px 16px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <span style="font-family:var(--ff-pixel);font-size:7px;letter-spacing:1px;color:${t.wisdomColor};">${t.wisdom}${isRec?' ★':''}</span>
+          <span style="font-family:var(--ff-pixel);font-size:7px;padding:2px 6px;background:${t.badgeColor};color:#fff;">${t.badge}</span>
+        </div>
+        <div class="term" style="font-size:19px;margin-bottom:4px;">${t.strategy}</div>
+        <div class="term muted" style="font-size:17px;">${t.detail}</div>
+      </div>`;
+    }).join('');
+
+    const conflictRows = (r.goalConflicts||[]).map(g=>
+      `<div class="alt"><span class="alt-arr">⚠</span>
+        <span class="term" style="font-size:19px;"><b>${g.name}</b> is due in ${g.monthsAway}mo — ${fmt(g.saved||0,r.c)} already earmarked.</span>
+      </div>`).join('');
+
+    return `
+    <div class="screen col-md" style="padding-top:8px;padding-bottom:40px;">
+      <div class="nav">
+        <button class="btn btn-d" onclick="goAsk()">← ASK AGAIN</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-d" onclick="goDashboard()">📊 DASH</button>
+          <button class="btn btn-d" onclick="goProfile()">⚙ PROFILE</button>
+        </div>
+      </div>
+
+      <div class="term muted" style="font-size:18px;letter-spacing:2px;">
+        VERDICT FOR: <span style="color:var(--ink);">${r.item.toUpperCase()}</span>
+        <span class="muted">(${fmt(r.amount,r.c)}${r.purchaseMonths!=null?' · in '+tstr(r.purchaseMonths):''})</span>
+      </div>
+
+      <div class="box ${bc}">
+        <div class="verd ${vc}" style="font-size:clamp(11px,2.8vw,15px);">
+          <div style="font-size:48px;margin-bottom:8px;">${r.emoji}</div>
+          ${r.tagline}
+        </div>
+        <div class="term" style="font-size:19px;color:var(--dim);text-align:center;margin-top:4px;">${r.detail}</div>
+      </div>
+
+      <div class="col-sm">
+        <div class="px muted" style="font-size:7px;letter-spacing:2px;">THE NUMBERS</div>
+        <div class="box box-d">
+          <div class="sr"><span class="sr-label">COST</span><span class="money">${fmt(r.amount,r.c)}</span></div>
+          <div class="sr"><span class="sr-label">FREE MONTHLY</span><span class="money">${fmt(r.freeSurp,r.c)}</span></div>
+          <div class="sr"><span class="sr-label">AVAILABLE LIQUID</span><span style="color:${r.effLiquid>=r.amount?'var(--amber)':r.effLiquid>0?'var(--mid)':'var(--maroon)'};">${fmt(r.effLiquid,r.c)}</span></div>
+          ${r.purchaseMonths!=null?`<div class="sr"><span class="sr-label">BUYING IN</span><span style="color:var(--navy);">${tstr(r.purchaseMonths)}</span></div>`:''}
+          ${((r.upcomingPressure||0)>0||(r.stPressure||0)>0)?`<div style="border-top:1px dashed var(--border);margin-top:4px;padding-top:6px;display:flex;flex-direction:column;gap:4px;">
+            <div style="font-family:var(--ff-pixel);font-size:7px;color:var(--dim);margin-bottom:2px;">RAW SAVINGS: ${fmt((r.effLiquid||0)+(r.stPressure||0)+(r.upcomingPressure||0),r.c)}</div>
+            ${(r.upcomingPressure||0)>0?`<div class="sr" style="padding:0;"><span style="font-family:var(--ff-pixel);font-size:7px;color:var(--mid);">UPCOMING EXPENSES</span><span style="color:var(--maroon);">-${fmt(r.upcomingPressure,r.c)}</span></div>`:''}
+            ${(r.stPressure||0)>0?`<div class="sr" style="padding:0;"><span style="font-family:var(--ff-pixel);font-size:7px;color:var(--mid);">SHORT-TERM GOALS LOCKED</span><span style="color:var(--maroon);">-${fmt(r.stPressure,r.c)}</span></div>`:''}
+          </div>`:''}
+        </div>
+      </div>
+
+      <div class="col-sm">
+        <div class="px" style="font-size:7px;letter-spacing:2px;color:var(--maroon);">★ YOUR OPTIONS</div>
+        ${wisRows}
+      </div>
+
+      ${conflictRows?`
+      <div class="col-sm">
+        <div class="px muted" style="font-size:7px;letter-spacing:2px;">SHORT-TERM GOAL CONFLICTS</div>
+        <div class="box box-p">
+          ${conflictRows}
+          <div class="term muted" style="font-size:17px;margin-top:8px;">These saved amounts are already earmarked — deducted from your available liquid above.</div>
+        </div>
+      </div>`:''}
+
+      <button class="btn btn-g full" style="margin-top:8px;" onclick="goAsk()">ASK ABOUT SOMETHING ELSE →</button>
+    </div>`;
+  }
+
+  let nums;
+  if(r.recurring){
+    nums=`
+      <div class="sr"><span class="sr-label">THIS COSTS</span><span class="money">${fmt(r.amount,r.c)}/mo</span></div>
+      <div class="sr"><span class="sr-label">FREE MONTHLY NOW</span><span style="color:${r.freeSurp>=0?'var(--amber)':'var(--maroon)'};">${fmt(r.freeSurp,r.c)}</span></div>
+      <div class="sr"><span class="sr-label">FREE MONTHLY AFTER</span><span style="color:${r.newFree>=0?'var(--navy)':'var(--maroon)'};">${fmt(r.newFree,r.c)}</span></div>`;
+  } else if(r.isSmall) {
+    // Small purchase: monthly income only
+    nums=`
+      <div class="sr"><span class="sr-label">COST</span><span class="money">${fmt(r.amount,r.c)}</span></div>
+      <div class="sr"><span class="sr-label">FREE MONTHLY</span><span class="money">${fmt(r.freeSurp,r.c)}</span></div>
+      ${r.moNeeded>1?`<div class="sr"><span class="sr-label">MONTHS TO SAVE</span><span style="color:var(--navy);">${r.moNeeded}</span></div>`:''}
+      <div class="sr" style="border-top:2px solid var(--navy);margin-top:4px;padding-top:8px;">
+        <span style="color:var(--navy);font-family:var(--ff-pixel);font-size:8px;">SAVINGS UNTOUCHED</span>
+        <span style="color:var(--navy);font-size:20px;">✓</span>
+      </div>`;
+  } else {
+    // Large purchase
+    if(r.usedLiquid) {
+      nums=`
+        <div class="sr"><span class="sr-label">COST</span><span class="money">${fmt(r.amount,r.c)}</span></div>
+        <div class="sr"><span class="sr-label">AVAILABLE LIQUID</span><span style="color:${r.effLiquid>=0?'var(--amber)':'var(--maroon)'};">${fmt(r.effLiquid,r.c)}</span></div>
+        <div class="sr" style="border-top:2px solid var(--maroon);margin-top:4px;padding-top:8px;">
+          <span style="color:var(--maroon);font-family:var(--ff-pixel);font-size:8px;">TOUCHES SAVINGS</span>
+          <span style="color:var(--maroon);font-size:20px;">⚠</span>
+        </div>`;
+    } else {
+      nums=`
+        <div class="sr"><span class="sr-label">COST</span><span class="money">${fmt(r.amount,r.c)}</span></div>
+        <div class="sr"><span class="sr-label">FREE MONTHLY</span><span class="money">${fmt(r.freeSurp,r.c)}</span></div>
+        ${isFinite(r.moToSave)&&r.moToSave>1?`<div class="sr"><span class="sr-label">MONTHS TO SAVE</span><span style="color:var(--navy);">${r.moToSave}</span></div>`:''}
+        ${r.emiComfy?`<div class="sr"><span class="sr-label">EMI (12 MONTHS)</span><span style="color:var(--navy);">${fmt(r.emi12,r.c)}/mo</span></div>`:''}
+        <div class="sr" style="border-top:2px solid var(--navy);margin-top:4px;padding-top:8px;">
+          <span style="color:var(--navy);font-family:var(--ff-pixel);font-size:8px;">SAVINGS UNTOUCHED</span>
+          <span style="color:var(--navy);font-size:20px;">✓</span>
+        </div>`;
+    }
+  }
+
+  const goalImpacts=r.goalImpacts?.filter(g=>g.delay>0)||[];
+  const hasGoals=goalImpacts.length>0;
+
+  return `
+  <div class="screen col-md" style="padding-top:8px;padding-bottom:40px;">
+    <div class="nav">
+      <button class="btn btn-d" onclick="goAsk()">← ASK AGAIN</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-d" onclick="goDashboard()">📊 DASH</button>
+        <button class="btn btn-d" onclick="goProfile()">⚙ PROFILE</button>
+      </div>
+    </div>
+
+    <div class="term muted" style="font-size:18px;letter-spacing:2px;">
+      VERDICT FOR: <span style="color:var(--white);">${r.item.toUpperCase()}</span>
+      <span class="muted">(${fmt(r.amount,r.c)}${r.recurring?'/mo':''})</span>
+    </div>
+
+    <div class="box ${bc}">
+      <div class="verd ${vc}" style="font-size:clamp(11px,2.8vw,15px);">
+        <div style="font-size:48px;margin-bottom:8px;">${r.emoji}</div>
+        ${r.tagline}
+      </div>
+      <div class="term" style="font-size:19px;color:var(--dim);text-align:center;margin-top:4px;">${r.detail}</div>
+    </div>
+
+    <div class="col-sm">
+      <div class="px muted" style="font-size:7px;letter-spacing:2px;">THE NUMBERS</div>
+      <div class="box box-d">${nums}</div>
+    </div>
+
+    ${hasGoals?`
+    <div class="col-sm">
+      <div class="px muted" style="font-size:7px;letter-spacing:2px;">GOAL IMPACT</div>
+      <div class="box box-d">
+        ${goalImpacts.map(g=>`
+          <div class="sr">
+            <span class="sr-label">${g.name.toUpperCase()}</span>
+            <span style="color:var(--maroon);">+${tstr(Math.round(g.delay))} delay</span>
+          </div>`).join('')}
+      </div>
+    </div>`:''}
+
+    ${r.alts?.length?`
+    <div class="col-sm">
+      <div class="px" style="font-size:7px;letter-spacing:2px;color:var(--maroon);">★ ALTERNATIVES</div>
+      <div class="box box-p">
+        ${r.alts.map(a=>`<div class="alt"><span class="alt-arr">→</span><span class="term" style="font-size:19px;">${a}</span></div>`).join('')}
+      </div>
+    </div>`:''}
+
+    <button class="btn btn-g full" style="margin-top:8px;" onclick="goAsk()">ASK ABOUT SOMETHING ELSE →</button>
+  </div>`;
+}
+
+// ── PROFILE ─────────────────────────────────────────────
+function screenProfile(){
+  const p=S.profile; if(!p) return screenWelcome();
+  const totExp=p.fixedExpenses+p.variableExpenses;
+  const rawSurp=p.income-totExp;
+  const freeSurp=rawSurp-p.savingsTarget;
+  const emgTgt=totExp*p.emergencyMonths;
+  const liquid=p.savings-emgTgt;
+
+  return `
+  <div class="screen col-md" style="padding-top:8px;padding-bottom:40px;">
+    <div class="nav">
+      <button class="btn btn-d" onclick="goAsk()">← BACK</button>
+      <div class="px" style="font-size:7px;color:var(--maroon);">YOUR PROFILE</div>
+      ${S.confirmReset?
+        `<div style="display:flex;gap:8px;align-items:center;">
+           <button class="btn btn-r" onclick="doReset()">YES, RESET</button>
+           <button class="btn btn-d" onclick="cancelReset()">NO</button>
+         </div>`:
+        `<button class="btn btn-r" onclick="confirmReset()">RESET</button>`}
+    </div>
+
+    ${S.confirmReset?`<div class="box box-p" style="text-align:center;">
+      <div class="px pk" style="font-size:9px;">DELETE PROFILE?</div>
+      <div class="term muted" style="font-size:18px;margin-top:8px;">This wipes everything. Use the buttons above to confirm.</div>
+    </div>`:''}
+
+    <div class="box">
+      <div class="px muted" style="font-size:7px;margin-bottom:12px;">MONTHLY FLOW</div>
+      <div class="sr"><span class="sr-label">INCOME</span><span class="money">${fmt(p.income)}</span></div>
+      <div class="sr"><span class="sr-label">FIXED OUT</span><span style="color:var(--maroon);">-${fmt(p.fixedExpenses)}</span></div>
+      <div class="sr"><span class="sr-label">VARIABLE OUT</span><span style="color:var(--maroon);">-${fmt(p.variableExpenses)}</span></div>
+      <div class="sr"><span class="sr-label">SAVINGS TARGET</span><span style="color:var(--navy);">-${fmt(p.savingsTarget)}</span></div>
+      <div class="sr" style="border-top:2px solid var(--navy);padding-top:8px;margin-top:4px;">
+        <span class="sr-label">FREE TO SPEND</span>
+        <span style="color:${freeSurp>=0?'var(--navy)':'var(--maroon)'};">${fmt(freeSurp)}</span>
+      </div>
+    </div>
+
+    <div class="box box-g">
+      <div class="px muted" style="font-size:7px;margin-bottom:12px;">WAR CHEST</div>
+      <div class="sr"><span class="sr-label">LIQUID SAVINGS</span><span class="money">${fmt(p.savings)}</span></div>
+      <div class="sr"><span class="sr-label">EMERGENCY FUND (${p.emergencyMonths}mo)</span><span class="cy">${fmt(emgTgt)}</span></div>
+      <div class="sr"><span class="sr-label">AVAILABLE LIQUID</span><span style="color:${liquid>=0?'var(--amber)':'var(--maroon)'};">${fmt(liquid)}</span></div>
+      ${p.investments?`<div class="sr"><span class="sr-label">INVESTMENTS</span><span style="color:var(--navy);">${fmt(p.investments)}</span></div>`:''}
+      ${p.smallPurchaseThreshold?`
+      <div class="sr" style="border-top:1px dashed var(--border);margin-top:6px;padding-top:6px;">
+        <span class="sr-label">SMALL PURCHASE LIMIT</span>
+        <span style="color:var(--navy);font-family:var(--ff-pixel);font-size:9px;">≤ ${fmt(p.smallPurchaseThreshold)}</span>
+      </div>`:''}
+    </div>
+
+    ${(p.upcomingExpenses||[]).length?`
+    <div class="col-sm">
+      <div class="px muted" style="font-size:7px;">UPCOMING EXPENSES</div>
+      ${p.upcomingExpenses.map(e=>`
+        <div class="sr"><span class="sr-label">${e.name.toUpperCase()}</span>
+          <span class="money">${fmt(e.amount)} in ${e.monthsAway}mo</span></div>`).join('')}
+    </div>`:''}
+
+    ${(()=>{
+      const sg=(p.goals||[]).filter(g=>(g.term||'long')==='short');
+      const lg=(p.goals||[]).filter(g=>(g.term||'long')==='long');
+      const goalCard=g=>{
+        const pct=Math.min(100,Math.round((g.saved||0)/g.target*100));
+        return `<div class="box box-d" style="padding:12px 16px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:19px;">${g.name}</span>
+            <span style="display:flex;gap:8px;align-items:center;">
+              ${g.monthsAway?`<span style="font-family:var(--ff-pixel);font-size:7px;color:var(--dim);">${g.monthsAway}mo</span>`:''}
+              <span class="money" style="font-size:19px;">${fmt(g.target)}</span>
+            </span>
+          </div>
+          <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span class="term muted" style="font-size:16px;">saved ${fmt(g.saved||0)}</span>
+            <span class="term muted" style="font-size:16px;">${pct}%</span>
+          </div>
+        </div>`;
+      };
+      let out='';
+      if(sg.length) out+=`<div class="col-sm"><div class="px muted" style="font-size:7px;">SHORT-TERM GOALS <span style="color:var(--amber);">(affect affordability math)</span></div>${sg.map(goalCard).join('')}</div>`;
+      if(lg.length) out+=`<div class="col-sm"><div class="px muted" style="font-size:7px;">LONG-TERM GOALS</div>${lg.map(goalCard).join('')}</div>`;
+      return out;
+    })()}
+
+    <button class="btn btn-g full" onclick="goDashboard()">📊 VIEW DASHBOARD →</button>
+    <button class="btn btn-d full" onclick="editProfile()">EDIT PROFILE</button>
+  </div>`;
+}
+
+// ── DASHBOARD ───────────────────────────────────────────────────
+function screenDashboard(){
+  const p = S.profile;
+  if(!p) return screenWelcome();
+
+  const c         = p.currency;
+  const totExp    = p.fixedExpenses + p.variableExpenses;
+  const rawSurp   = p.income - totExp;
+  const freeSurp  = Math.max(0, rawSurp - p.savingsTarget);
+  const emgTgt    = totExp * p.emergencyMonths;
+  const liquid    = p.savings - emgTgt;
+
+  const savingsRate = p.income > 0 ? (p.savingsTarget / p.income * 100).toFixed(1) : '0.0';
+  const emgCover    = totExp > 0 ? p.savings / totExp : 0;
+  const lastDate    = p.lastUpdated
+    ? new Date(p.lastUpdated).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})
+    : '—';
+
+  // Income bar percentages
+  const inc        = p.income || 1;
+  const fixedPct   = Math.round(p.fixedExpenses / inc * 100);
+  const varPct     = Math.round(p.variableExpenses / inc * 100);
+  const savePct    = Math.round(p.savingsTarget / inc * 100);
+  const surplusPct = Math.max(0, 100 - fixedPct - varPct - savePct);
+
+  // 4 categorical colors (hue-spread ≥ 50°, CVD-safe with legend labels)
+  const CF = '#781C2C'; // fixed   — maroon
+  const CV = '#B87A0A'; // variable — amber
+  const CS = '#1A2E6E'; // savings  — navy
+  const CG = '#2E6E3A'; // surplus  — forest green
+
+  function seg(pct, color, label) {
+    if(pct <= 0) return '';
+    return `<div title="${label}: ${pct}%" style="width:${pct}%;background:${color};display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:2px;cursor:default;transition:filter .1s;" onmouseenter="this.style.filter='brightness(1.12)'" onmouseleave="this.style.filter=''">${pct >= 14 ? `<span style="font-family:var(--ff-pixel);font-size:7px;color:rgba(255,255,255,.85);pointer-events:none;">${pct}%</span>` : ''}</div>`;
+  }
+
+  // War chest segments
+  const chestEmgPct  = p.savings > 0 ? Math.min(100, Math.round(emgTgt / p.savings * 100)) : 100;
+  const chestFreePct = Math.max(0, 100 - chestEmgPct);
+
+  // Goals — split short/long
+  const goals = p.goals || [];
+  const shortGoalsDash = goals.filter(g=>(g.term||'long')==='short');
+  const longGoalsDash  = goals.filter(g=>(g.term||'long')==='long');
+  const totalGoalTarget = goals.reduce((s,g) => s + g.target, 0) || 1;
+
+  function goalCard(g) {
+    const pct  = Math.min(100, Math.round(((g.saved||0) / g.target) * 100));
+    const rem  = g.target - (g.saved||0);
+    const share = g.target / totalGoalTarget;
+    const mo   = p.savingsTarget > 0 ? Math.ceil(rem / (p.savingsTarget * share)) : null;
+    return `<div class="col-sm" style="gap:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span class="term" style="font-size:21px;">${g.name}</span>
+        <span style="font-family:var(--ff-pixel);font-size:7px;color:var(--dim);">${pct}%${mo?' · '+tstr(mo):''}${g.monthsAway?' · '+g.monthsAway+'mo':''}</span>
+      </div>
+      <div class="prog-track" style="height:14px;"><div class="prog-fill" style="width:${pct}%;height:100%;"></div></div>
+      <div style="display:flex;justify-content:space-between;">
+        <span class="term muted" style="font-size:17px;">saved <span style="color:var(--amber);">${fmt(g.saved||0,c)}</span></span>
+        <span class="term muted" style="font-size:17px;">of <span style="color:var(--ink);">${fmt(g.target,c)}</span></span>
+      </div>
+    </div>`;
+  }
+
+  // Upcoming
+  const upcoming = (p.upcomingExpenses||[]).slice().sort((a,b) => a.monthsAway - b.monthsAway);
+  const upcomingHTML = upcoming.map(e =>
+    `<div class="sr"><span class="sr-label">${e.name.toUpperCase()}</span>
+      <span style="display:flex;gap:12px;align-items:center;">
+        <span class="money">${fmt(e.amount,c)}</span>
+        <span style="font-family:var(--ff-pixel);font-size:7px;color:${e.monthsAway<=2?'var(--maroon)':'var(--dim)'};">in ${e.monthsAway}mo${e.monthsAway<=2?' ⚠':''}</span>
+      </span>
+    </div>`).join('');
+
+  return `
+  <div class="screen col-md" style="padding-top:8px;padding-bottom:40px;">
+    <div class="nav">
+      <button class="btn btn-d" onclick="goAsk()">← BACK</button>
+      <div class="px" style="font-size:7px;color:var(--navy);">DASHBOARD</div>
+      <div class="term muted" style="font-size:17px;">${lastDate}</div>
+    </div>
+
+    <!-- KPI TILES -->
+    <div style="display:flex;gap:8px;">
+      <div style="background:var(--panel);border:2px solid var(--border);box-shadow:3px 3px 0 var(--border);padding:14px 8px;text-align:center;flex:1;min-width:0;">
+        <div style="font-family:var(--ff-pixel);font-size:clamp(14px,4vw,22px);color:var(--navy);line-height:1.6;">${savingsRate}%</div>
+        <div style="font-family:var(--ff-pixel);font-size:7px;color:var(--dim);margin-top:4px;letter-spacing:1px;line-height:1.6;">SAVINGS<br>RATE</div>
+      </div>
+      <div style="background:var(--panel);border:2px solid var(--border);box-shadow:3px 3px 0 var(--border);padding:14px 8px;text-align:center;flex:1;min-width:0;">
+        <div style="font-family:var(--ff-pixel);font-size:clamp(14px,4vw,22px);color:${emgCover>=3?'var(--navy)':emgCover>=1?'var(--amber)':'var(--maroon)'};line-height:1.6;">${emgCover.toFixed(1)}<span style="font-size:.5em;">mo</span></div>
+        <div style="font-family:var(--ff-pixel);font-size:7px;color:var(--dim);margin-top:4px;letter-spacing:1px;line-height:1.6;">EMERGENCY<br>COVER</div>
+      </div>
+      <div style="background:var(--panel);border:2px solid var(--border);box-shadow:3px 3px 0 var(--border);padding:14px 8px;text-align:center;flex:1;min-width:0;">
+        <div style="font-family:var(--ff-pixel);font-size:clamp(10px,2.5vw,15px);color:${freeSurp>0?'var(--navy)':'var(--maroon)'};line-height:1.6;">${fmt(freeSurp,c)}</div>
+        <div style="font-family:var(--ff-pixel);font-size:7px;color:var(--dim);margin-top:4px;letter-spacing:1px;line-height:1.6;">FREE<br>MONTHLY</div>
+      </div>
+    </div>
+
+    <!-- INCOME BREAKDOWN -->
+    <div class="col-sm">
+      <div class="px muted" style="font-size:7px;letter-spacing:2px;">WHERE YOUR MONEY GOES</div>
+      <div class="box box-d" style="padding:16px;">
+        <div style="display:flex;height:40px;gap:2px;overflow:hidden;">
+          ${seg(fixedPct,CF,'Fixed expenses')}
+          ${seg(varPct,CV,'Variable expenses')}
+          ${seg(savePct,CS,'Savings')}
+          ${seg(surplusPct,CG,'Free surplus')}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;">
+          ${fixedPct>0?`<div style="display:flex;align-items:center;gap:6px;font-size:17px;"><div style="width:10px;height:10px;background:${CF};flex-shrink:0;"></div><span class="muted">Fixed</span><span style="color:${CF};">${fmt(p.fixedExpenses,c)}</span><span class="muted">(${fixedPct}%)</span></div>`:''}
+          ${varPct>0?`<div style="display:flex;align-items:center;gap:6px;font-size:17px;"><div style="width:10px;height:10px;background:${CV};flex-shrink:0;"></div><span class="muted">Variable</span><span class="money">${fmt(p.variableExpenses,c)}</span><span class="muted">(${varPct}%)</span></div>`:''}
+          ${savePct>0?`<div style="display:flex;align-items:center;gap:6px;font-size:17px;"><div style="width:10px;height:10px;background:${CS};flex-shrink:0;"></div><span class="muted">Savings</span><span style="color:var(--navy);">${fmt(p.savingsTarget,c)}</span><span class="muted">(${savePct}%)</span></div>`:''}
+          ${surplusPct>0?`<div style="display:flex;align-items:center;gap:6px;font-size:17px;"><div style="width:10px;height:10px;background:${CG};flex-shrink:0;"></div><span class="muted">Free</span><span style="color:${CG};">${fmt(freeSurp,c)}</span><span class="muted">(${surplusPct}%)</span></div>`:''}
+        </div>
+      </div>
+    </div>
+
+    <!-- WAR CHEST -->
+    <div class="col-sm">
+      <div class="px muted" style="font-size:7px;letter-spacing:2px;">WAR CHEST</div>
+      <div class="box box-g" style="padding:16px;">
+        ${p.savings > 0 ? `<div style="display:flex;height:28px;gap:2px;">
+          <div style="width:${chestEmgPct}%;background:#8C887E;display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:2px;" title="Emergency fund: ${fmt(emgTgt,c)}">
+            ${chestEmgPct>=25?`<span style="font-family:var(--ff-pixel);font-size:7px;color:rgba(255,255,255,.85);">LOCKED</span>`:''}
+          </div>
+          ${chestFreePct>0?`<div style="width:${chestFreePct}%;background:var(--amber);display:flex;align-items:center;justify-content:center;overflow:hidden;min-width:2px;" title="Available: ${fmt(liquid,c)}">
+            ${chestFreePct>=25?`<span style="font-family:var(--ff-pixel);font-size:7px;color:rgba(255,255,255,.85);">FREE</span>`:''}
+          </div>`:''}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:17px;"><div style="width:10px;height:10px;background:#8C887E;flex-shrink:0;"></div><span class="muted">Emergency (${p.emergencyMonths}mo)</span><span style="font-weight:bold;">${fmt(emgTgt,c)}</span></div>
+          ${liquid>=0?`<div style="display:flex;align-items:center;gap:6px;font-size:17px;"><div style="width:10px;height:10px;background:var(--amber);flex-shrink:0;"></div><span class="muted">Available</span><span class="money">${fmt(liquid,c)}</span></div>`:`<div style="color:var(--maroon);font-size:17px;">⚠ ${fmt(Math.abs(liquid),c)} below emergency target</div>`}
+        </div>
+        ${p.investments?`<div class="sr" style="margin-top:10px;border-top:1px dashed var(--border);padding-top:10px;"><span class="sr-label">INVESTMENTS</span><span style="color:var(--navy);font-weight:bold;">${fmt(p.investments,c)}</span></div>`:''}` : `<div class="term muted" style="font-size:19px;text-align:center;padding:8px 0;">No savings entered yet.</div>`}
+      </div>
+    </div>
+
+    ${shortGoalsDash.length?`<!-- SHORT-TERM GOALS -->
+    <div class="col-sm">
+      <div class="px muted" style="font-size:7px;letter-spacing:2px;">SHORT-TERM GOALS <span style="color:var(--amber);font-size:6px;">▶ AFFECT LIQUID MATH</span></div>
+      <div class="box box-d" style="padding:16px;">
+        <div class="col-md">${shortGoalsDash.map(goalCard).join('<div style="height:1px;background:var(--border);margin:4px 0;"></div>')}</div>
+      </div>
+    </div>`:''}
+    ${longGoalsDash.length?`<!-- LONG-TERM GOALS -->
+    <div class="col-sm">
+      <div class="px muted" style="font-size:7px;letter-spacing:2px;">LONG-TERM GOALS</div>
+      <div class="box box-d" style="padding:16px;">
+        <div class="col-md">${longGoalsDash.map(goalCard).join('<div style="height:1px;background:var(--border);margin:4px 0;"></div>')}</div>
+      </div>
+    </div>`:''}
+
+    ${upcoming.length?`<!-- UPCOMING -->
+    <div class="col-sm">
+      <div class="px muted" style="font-size:7px;letter-spacing:2px;">UPCOMING EXPENSES</div>
+      <div class="box box-d" style="padding:16px;">${upcomingHTML}</div>
+    </div>`:''}
+
+    <button class="btn btn-g full" onclick="goAsk()">ASK IF YOU CAN AFFORD SOMETHING →</button>
+  </div>`;
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────
+function render(){
+  const app=document.getElementById('app'); if(!app) return;
+  switch(S.screen){
+    case 'welcome': app.innerHTML=screenWelcome(); break;
+    case 'setup':   app.innerHTML=screenSetup();   break;
+    case 'delta':   app.innerHTML=screenDelta();   break;
+    case 'ask':     app.innerHTML=screenAsk();     break;
+    case 'loading': app.innerHTML=screenLoading(); break;
+    case 'result':  app.innerHTML=screenResult();  break;
+    case 'profile':   app.innerHTML=screenProfile();   break;
+    case 'dashboard': app.innerHTML=screenDashboard(); break;
+    default:          app.innerHTML=screenWelcome();
+  }
+  window.scrollTo(0,0);
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────
+function goWelcome(){ S.screen='welcome'; render(); }
+function goAsk()    { S.screen='ask';     render(); }
+function goProfile()   { S.confirmReset=false; S.screen='profile';   render(); }
+function goDashboard() { S.screen='dashboard'; render(); }
+
+function goSetup(){
+  TP={...DEFAULT}; S.setupStep=0; S.screen='setup'; render();
+}
+
+function goBack(){
+  const p=load();
+  if(p){ S.profile=p; S.screen='delta'; }
+  else  { goSetup(); }
+  render();
+}
+
+function editProfile(){
+  TP={...(S.profile||DEFAULT)}; S.setupStep=0; S.screen='setup'; render();
+}
+
+function setupBack(){
+  if(S.setupStep===0){ goWelcome(); return; }
+  S.setupStep--; render();
+}
+
+function setupSkip(){
+  S.setupStep++;
+  if(S.setupStep>=STEPS.length) finishSetup();
+  else render();
+}
+
+function setupNext(){
+  const step=STEPS[S.setupStep];
+  const result=step.collect(TP);
+  if(typeof result==='string'){ flashError(result); return; }
+  TP=result; S.setupStep++;
+  if(S.setupStep>=STEPS.length) finishSetup();
+  else render();
+}
+
+function finishSetup(){
+  save(TP); S.profile={...TP}; S.screen='ask'; render();
+}
+
+function flashError(msg){
+  const inp=document.querySelector('input,select');
+  if(inp){ inp.style.borderColor='var(--pink)'; inp.focus(); setTimeout(()=>inp.style.borderColor='',2000); }
+  let e=document.getElementById('_err');
+  if(!e){
+    e=document.createElement('div'); e.id='_err';
+    e.style.cssText='color:var(--pink);font-family:var(--ff-terminal);font-size:18px;text-align:center;padding:8px;';
+    document.querySelector('.screen')?.appendChild(e);
+  }
+  e.textContent='⚠ '+msg;
+}
+
+function setDF(f){ S.deltaField=f; render(); }
+function clearDF(){ S.deltaField=null; render(); }
+
+function saveDelta(field){
+  const p={...S.profile};
+  if(field==='income'){
+    const v=parseFloat(document.getElementById('d_inc')?.value); if(v>0) p.income=v;
+    const st=parseFloat(document.getElementById('d_st')?.value); if(st>=0) p.savingsTarget=st;
+  } else if(field==='expenses'){
+    p.fixedExpenses=parseFloat(document.getElementById('d_fix')?.value)||0;
+    p.variableExpenses=parseFloat(document.getElementById('d_var')?.value)||0;
+  } else if(field==='savings'){
+    const v=parseFloat(document.getElementById('d_sav')?.value); if(v>=0) p.savings=v;
+  } else if(field==='goals'){
+    p.goals=(p.goals||[]).map((g,i)=>{
+      const sBtn=document.getElementById(`dg_short_${i}`);
+      const term=sBtn?.classList.contains('on')?'short':'long';
+      const monthsAway=term==='short'?(parseInt(document.getElementById(`dg_ma_${i}`)?.value)||null):null;
+      return {...g,term,monthsAway};
+    });
+  } else {
+    const name=document.getElementById('d_un')?.value?.trim();
+    const amount=parseFloat(document.getElementById('d_ua')?.value)||0;
+    const monthsAway=parseInt(document.getElementById('d_um')?.value)||1;
+    if(name&&amount>0) p.upcomingExpenses=[...(p.upcomingExpenses||[]),{name,amount,monthsAway}];
+  }
+  save(p); S.profile=p; S.deltaField=null; render();
+}
+
+function setRec(val){ S.query={...(S.query||{}),isRecurring:val}; render(); }
+
+function getBasket(){
+  const existing=S.query?.basket||[{item:'',amount:''}];
+  return existing.map((row,i)=>({
+    item: document.getElementById(`b_item_${i}`)?.value??row.item??'',
+    amount: document.getElementById(`b_amt_${i}`)?.value??row.amount??''
+  }));
+}
+function addBasketRow(){
+  const basket=getBasket(); basket.push({item:'',amount:''});
+  S.query={...(S.query||{}),basket}; render();
+}
+function removeBasketRow(i){
+  let basket=getBasket().filter((_,j)=>j!==i);
+  if(!basket.length) basket=[{item:'',amount:''}];
+  S.query={...(S.query||{}),basket}; render();
+}
+
+function run(){
+  const basket=getBasket();
+  const valid=basket.filter(r=>r.item?.trim()&&parseFloat(r.amount)>0);
+  if(!valid.length){ flashError('What are you buying?'); return; }
+  const item=valid.map(r=>r.item.trim()).join(' + ');
+  const amount=valid.reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const isRecurring=S.query?.isRecurring||false;
+  const moEl=document.getElementById('q_mo');
+  const purchaseMonths=(!isRecurring&&moEl&&moEl.value!=='')?parseInt(moEl.value):null;
+  S.query={basket:valid,item,amount,isRecurring,purchaseMonths};
+  S.screen='loading'; render();
+  setTimeout(()=>{ S.result=analyze(item,amount,isRecurring,purchaseMonths); S.screen='result'; render(); },1100);
+}
+
+function confirmReset(){ S.confirmReset=true; render(); }
+function cancelReset() { S.confirmReset=false; render(); }
+function doReset(){
+  try{ localStorage.removeItem('caai_v1'); } catch(e){}
+  S.profile=null; S.confirmReset=false; S.screen='welcome'; render();
+}
+
+// ── Setup step helpers ──
+function addUp(){
+  const name=document.getElementById('f_un')?.value?.trim();
+  const amount=parseFloat(document.getElementById('f_ua')?.value)||0;
+  const monthsAway=parseInt(document.getElementById('f_um')?.value)||1;
+  if(!name||!amount) return;
+  TP.upcomingExpenses=[...(TP.upcomingExpenses||[]),{name,amount,monthsAway}];
+  ['f_un','f_ua','f_um'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  const el=document.getElementById('up-list');
+  if(el) el.innerHTML=renderUpList(TP.upcomingExpenses,TP.currency);
+}
+
+function rmUp(i){
+  TP.upcomingExpenses=(TP.upcomingExpenses||[]).filter((_,j)=>j!==i);
+  const el=document.getElementById('up-list');
+  if(el) el.innerHTML=renderUpList(TP.upcomingExpenses,TP.currency);
+}
+
+function setDeltaGoalTerm(idx, term){
+  const lBtn=document.getElementById(`dg_long_${idx}`);
+  const sBtn=document.getElementById(`dg_short_${idx}`);
+  if(lBtn) lBtn.classList.toggle('on',term==='long');
+  if(sBtn) sBtn.classList.toggle('on',term==='short');
+  const maRow=document.getElementById(`dg-ma-${idx}`);
+  if(maRow) maRow.style.display=term==='short'?'':'none';
+}
+
+function setGoalTerm(term){
+  window._goalTerm=term;
+  const lBtn=document.getElementById('tog_glong'), sBtn=document.getElementById('tog_gshort');
+  if(lBtn) lBtn.classList.toggle('on',term==='long');
+  if(sBtn) sBtn.classList.toggle('on',term==='short');
+  const maRow=document.getElementById('goal-ma-row');
+  if(maRow) maRow.style.display=term==='short'?'':'none';
+  const hint=document.getElementById('goal-term-hint');
+  if(hint) hint.textContent=term==='short'
+    ?'Short-term: saved amount is earmarked and reduces your available liquid in the math.'
+    :'Long-term: excluded from affordability math — tied to your investments.';
+}
+
+function addGoal(){
+  const name=document.getElementById('f_gn')?.value?.trim();
+  const target=parseFloat(document.getElementById('f_gt')?.value)||0;
+  const saved=parseFloat(document.getElementById('f_gs')?.value)||0;
+  const term=window._goalTerm||'long';
+  const monthsAway=term==='short'?(parseInt(document.getElementById('f_gma')?.value)||null):null;
+  if(!name||!target) return;
+  TP.goals=[...(TP.goals||[]),{name,target,saved,term,monthsAway}];
+  ['f_gn','f_gt','f_gs','f_gma'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  window._goalTerm='long'; setGoalTerm('long');
+  const el=document.getElementById('goal-list');
+  if(el) el.innerHTML=renderGoalList(TP.goals,TP.currency);
+}
+
+function rmGoal(i){
+  TP.goals=(TP.goals||[]).filter((_,j)=>j!==i);
+  const el=document.getElementById('goal-list');
+  if(el) el.innerHTML=renderGoalList(TP.goals,TP.currency);
+}
+
+// ─── BOOT ────────────────────────────────────────────────────────
+(function init(){
+  const p=load();
+  if(p) S.profile=p;
+  render();
+})();
+</script>
